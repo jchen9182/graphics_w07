@@ -71,12 +71,14 @@ void parse_file(char * filename,
                 screen s) {
     FILE *f;
     char line[256];
+
     clear_screen(s);
     int SIZE = 500;
     color c;
     change_color(&c, 0, 0, 0);
-    double line_step = .001;
-    double sphere_step = 10;
+
+    double linestep = 1000;
+    int polystep = 100;
 
     if (strcmp(filename, "stdin") == 0) f = stdin;
     else f = fopen(filename, "r");
@@ -97,7 +99,10 @@ void parse_file(char * filename,
 
         else if (!strcmp(lines[i], "ident")) ident(transform);
 
-        else if (!strcmp(lines[i], "apply")) matrix_mult(transform, edges);
+        else if (!strcmp(lines[i], "apply")) {
+            matrix_mult(transform, edges);
+            matrix_mult(transform, polygons);
+        }
 
         else if (!strcmp(lines[i], "line")) {
             char * args = lines[++i];
@@ -118,6 +123,7 @@ void parse_file(char * filename,
 
             struct matrix * scale = make_scale(x, y, z);
             matrix_mult(scale, transform);
+            matrix_mult(scale, polygons);
         }
 
         else if (!strcmp(lines[i], "move")) {
@@ -129,6 +135,7 @@ void parse_file(char * filename,
 
             struct matrix * translate = make_translate(x, y, z);
             matrix_mult(translate, transform);
+            matrix_mult(translate, polygons);
         }
 
         else if (!strcmp(lines[i], "rotate")) {
@@ -153,7 +160,7 @@ void parse_file(char * filename,
 
             sscanf(args, "%le %le %le %le", &cx, &cy, &cz, &r);
 
-            add_circle(edges, cx, cy, cz, r, line_step);
+            add_circle(edges, cx, cy, cz, r, linestep);
         }
 
         else if (!strcmp(lines[i], "hermite") || !strcmp(lines[i], "bezier")) {
@@ -167,7 +174,7 @@ void parse_file(char * filename,
             sscanf(args, "%le %le %le %le %le %le %le %le",
                           &x0, &y0, &x1, &y1, &x2, &y2, &x3, &y3);
 
-            add_curve(edges, x0, y0, x1, y1, x2, y2, x3, y3, line_step, type);
+            add_curve(edges, x0, y0, x1, y1, x2, y2, x3, y3, linestep, type);
         }
 
         else if (!strcmp(lines[i], "sphere")) {
@@ -176,7 +183,7 @@ void parse_file(char * filename,
 
             sscanf(args, "%le %le %le %le", &cx, &cy, &cz, &r);
 
-            add_sphere(edges, cx, cy, cz, r, sphere_step);
+            add_sphere(edges, cx, cy, cz, r, polystep);
         }
 
         else if (!strcmp(lines[i], "torus")) {
@@ -185,7 +192,7 @@ void parse_file(char * filename,
 
             sscanf(args, "%le %le %le %le %le", &cx, &cy, &cz, &r1, &r2);
 
-            add_torus(edges, cx, cy, cz, r1, r2, sphere_step);
+            add_torus(edges, cx, cy, cz, r1, r2, polystep);
         }
 
         else if (!strcmp(lines[i], "box")) {
@@ -200,17 +207,24 @@ void parse_file(char * filename,
 
         else if (!strcmp(lines[i], "clear")) {
             edges -> lastcol = 0;
+            polygons -> lastcol = 0;
         }
 
         else if (!strcmp(lines[i], "display")) {
+            int elastcol = edges -> lastcol;
+            int plastcol = polygons -> lastcol;
+
             clear_screen(s);
-            draw_lines(edges, s, c);
+            if (elastcol > 0) draw_lines(edges, s, c);
+            if (plastcol > 0) draw_polygons(polygons, s, c);
             display(s);
         }
 
         else if (!strcmp(lines[i], "save")) {
             clear_screen(s);
             draw_lines(edges, s, c);
+            draw_lines(polygons, s, c);
+
             char * arg = lines[++i];
             save_extension(s, arg);
             printf("Saved as %s\n", arg);

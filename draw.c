@@ -55,23 +55,27 @@ void draw_polygons( struct matrix *polygons, screen s, color c ) {
 void add_box( struct matrix * edges,
               double x, double y, double z,
               double width, double height, double depth ) {
+    double x1 = x + width;
+    double y1 = y - height;
+    double z1 = z - depth;
+
     // Left Face
-    add_edge(edges, x, y, z, x, y - height, z);
-    add_edge(edges, x, y - height, z, x, y - height, z - depth);
-    add_edge(edges, x, y - height, z - depth, x, y, z - depth);
-    add_edge(edges, x, y, z - depth, x, y, z);
+    add_edge(edges, x, y, z, x, y1, z);
+    add_edge(edges, x, y1, z, x, y1, z1);
+    add_edge(edges, x, y1, z1, x, y, z1);
+    add_edge(edges, x, y, z1, x, y, z);
 
     // Right Face
-    add_edge(edges, x + width, y, z, x + width, y - height, z);
-    add_edge(edges, x + width, y - height, z, x + width, y - height, z - depth);
-    add_edge(edges, x + width, y - height, z - depth, x + width, y, z - depth);
-    add_edge(edges, x + width, y, z - depth, x + width, y, z);
+    add_edge(edges, x1, y, z, x1, y1, z);
+    add_edge(edges, x1, y1, z, x1, y1, z1);
+    add_edge(edges, x1, y1, z1, x1, y, z1);
+    add_edge(edges, x1, y, z1, x1, y, z);
 
     // Connecting Edges
-    add_edge(edges, x, y, z, x + width, y, z);
-    add_edge(edges, x, y - height, z, x + width, y - height, z);
-    add_edge(edges, x, y - height, z - depth, x + width, y - height, z - depth);
-    add_edge(edges, x, y, z - depth, x + width, y, z - depth);
+    add_edge(edges, x, y, z, x1, y, z);
+    add_edge(edges, x, y1, z, x1, y1, z);
+    add_edge(edges, x, y1, z1, x1, y1, z1);
+    add_edge(edges, x, y, z1, x1, y, z1);
 }
 
 /*======== void add_sphere() ==========
@@ -121,11 +125,11 @@ struct matrix * generate_sphere(double cx, double cy, double cz,
     double phi = 0;
     double theta = 0;
 
-    for (int p = 0; p < 1000; p += step) {
-        phi = (2 * M_PI) * p / 1000;
+    for (int p = 0; p < step; p++) {
+        phi = (2 * M_PI) * p / step;
 
-        for (int t = 0; t < 1000; t += step) {
-            theta = M_PI * t / 1000;
+        for (int t = 0; t < step; t++) {
+            theta = M_PI * t / step;
 
             double x = r * cos(theta) + cx;
             double y = r * sin(theta) * cos(phi) + cy;
@@ -163,7 +167,7 @@ void add_torus( struct matrix * edges,
         double y = matrix[1][col];
         double z = matrix[2][col];
         
-        add_edge(edges, x, y, z, x, y, z);
+        add_edge(edges, x, y, z, x + 1, y + 1, z + 1);
     }
 }
 
@@ -186,11 +190,11 @@ struct matrix * generate_torus( double cx, double cy, double cz,
     double phi = 0;
     double theta = 0;
 
-    for (int p = 0; p < 1000; p += step) {
-        phi = (2 * M_PI) * p / 1000;
+    for (int p = 0; p < step; p++) {
+        phi = (2 * M_PI) * p / step;
 
-        for (int t = 0; t < 1000; t += step) {
-            theta = (2 * M_PI) * t / 1000;
+        for (int t = 0; t < step; t++) {
+            theta = (2 * M_PI) * t / step;
 
             double x = cos(phi) * (r1 * cos(theta) + r2) + cx;
             double y = r1 * sin(theta) + cy;
@@ -213,19 +217,19 @@ struct matrix * generate_torus( double cx, double cy, double cz,
   ====================*/
 void add_circle( struct matrix *edges,
                  double cx, double cy, double cz,
-                 double r, double step ) {
+                 double r, int step ) {
     double angle = 0;
     double x0 = cx + r;
     double y0 = cy;
 
-    for (double t = 0; t < 1; t += step) {
+    for (int t = 0; t <= step; t++) {
         double x1 = r * cos(angle) + cx;
         double y1 = r * sin(angle) + cy;
 
         add_edge(edges, x0, y0, 0, x1, y1, 0);
         x0 = x1;
         y0 = y1;
-        angle += (2 * M_PI) * step;
+        angle += (2 * M_PI) / 1000;
     }
 }
 
@@ -250,7 +254,7 @@ void add_curve( struct matrix *edges,
                 double x1, double y1,
                 double x2, double y2,
                 double x3, double y3,
-                double step, int type ) {
+                int step, int type ) {
     struct matrix * xco = generate_curve_coefs(x0, x1, x2, x3, type);
     struct matrix * yco = generate_curve_coefs(y0, y1, y2, y3, type);
     double ** xm = xco -> m;
@@ -258,8 +262,10 @@ void add_curve( struct matrix *edges,
     double xold = x0;
     double yold = y0;
 
-    for (double t = 0; t < 1; t += step) {
+    for (int i = 0; i <= step; i++) {
         double xnew, ynew;
+        double t = (double) i / step;
+
         xnew = t * (t * (xm[0][0] * t + xm[1][0]) + xm[2][0]) + xm[3][0];
         ynew = t * (t * (ym[0][0] * t + ym[1][0]) + ym[2][0]) + ym[3][0];
 
