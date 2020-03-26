@@ -4,8 +4,14 @@
 #include "matrix.h"
 #include "ml6.h"
 
-//advanced shapes
+//polygon organization
+void add_polygons( struct matrix * polys,
+                   double x0, double y0, double z0,
+                   double x1, double y1, double z1,
+                   double x2, double y2, double z2);
+void draw_polygons( struct matrix * polys, screen s, color c);
 
+//advanced shapes
 //3d shapes
 void add_box( struct matrix * edges,
               double x, double y, double z,
