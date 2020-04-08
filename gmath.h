@@ -5,8 +5,8 @@
 #include "ml6.h"
 
 //vector functions
-void normalize( double *vector );
-double dot_product( double *a, double *b );
-double *calculate_normal(struct matrix *polygons, int i);
+void normalize( double * vector );
+double dot_product( double * a, double * b );
+double * calculate_normal(struct matrix * polygons, int i);
 
 #endif

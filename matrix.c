@@ -73,8 +73,8 @@ struct matrix * make_hermite() {
   by p1, p2, p3 and p4.
   Type determines whether the curve is bezier or hermite (see matrix.h)
   ====================*/
-struct matrix * generate_curve_coefs( double p0, double p1,
-                                      double p2, double p3, int type) {
+struct matrix * generate_curve_coefs(double p0, double p1,
+                                     double p2, double p3, int type) {
     struct matrix * m = new_matrix(4, 1);
     double ** matrix = m -> m;
 
@@ -82,12 +82,16 @@ struct matrix * generate_curve_coefs( double p0, double p1,
     matrix[1][0] = p1;
     matrix[2][0] = p2;
     matrix[3][0] = p3;
-    m->lastcol++;
+    m -> lastcol = 1;
 
     struct matrix * curve;
-    if (type) curve = make_bezier();
-    else curve = make_hermite();
+    if (type) 
+        curve = make_bezier();
+    else 
+        curve = make_hermite();
+
     matrix_mult(curve, m);
+    free_matrix(curve);
 
     return m;
 }
@@ -140,13 +144,11 @@ struct matrix * make_rotX(double theta) {
     struct matrix * m = new_matrix(4, 4);
     double ** matrix = m -> m;
     ident(m);
-    double sine = sin(theta);
-    double cosine = cos(theta);
 
-    matrix[1][1] = cosine;
-    matrix[1][2] = -1 * sine;
-    matrix[2][1] = sine;
-    matrix[2][2] = cosine;
+    matrix[1][1] = cos(theta);
+    matrix[1][2] = -1 * sin(theta);
+    matrix[2][1] = sin(theta);
+    matrix[2][2] = cos(theta);
 
     return m;
 }
@@ -161,13 +163,11 @@ struct matrix * make_rotY(double theta) {
     struct matrix * m = new_matrix(4, 4);
     double ** matrix = m -> m;
     ident(m);
-    double sine = sin(theta);
-    double cosine = cos(theta);
 
-    matrix[0][0] = cosine;
-    matrix[0][2] = sine;
-    matrix[2][0] = -1 * sine;
-    matrix[2][2] = cosine;
+    matrix[0][0] = cos(theta);
+    matrix[0][2] = sin(theta);
+    matrix[2][0] = -1 * sin(theta);
+    matrix[2][2] = cos(theta);
 
     return m;
 }
@@ -182,13 +182,11 @@ struct matrix * make_rotZ(double theta) {
     struct matrix * m = new_matrix(4, 4);
     double ** matrix = m -> m;
     ident(m);
-    double sine = sin(theta);
-    double cosine = cos(theta);
 
-    matrix[0][0] = cosine;
-    matrix[0][1] = -1 * sine;
-    matrix[1][0] = sine;
-    matrix[1][1] = cosine;
+    matrix[0][0] = cos(theta);
+    matrix[0][1] = -1 * sin(theta);
+    matrix[1][0] = sin(theta);
+    matrix[1][1] = cos(theta);
 
     return m;
 }
@@ -204,6 +202,7 @@ void print_matrix(struct matrix *m) {
     double ** matrix = m -> m;
     int rows = m -> rows;
     int cols = m -> cols;
+
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < cols; col++) {
             printf("| %-6.2f", matrix[row][col]);
@@ -211,7 +210,7 @@ void print_matrix(struct matrix *m) {
         printf("|\n");
     }
     printf("\n");
-}//end print_matrix
+}
 
 /*-------------- void ident() --------------
 Inputs:  struct matrix *m <-- assumes m is a square matrix
@@ -222,10 +221,13 @@ void ident(struct matrix *m) {
     double ** matrix = m -> m;
     int rows = m -> rows;
     int cols = m -> cols;
+
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < cols; col++) {
-            if (row == col) matrix[row][col] = 1;
-            else matrix[row][col] = 0;
+            if (row == col) 
+                matrix[row][col] = 1;
+            else 
+                matrix[row][col] = 0;
         }
     }
     m -> lastcol = cols;
@@ -273,21 +275,21 @@ Once allocated, access the matrix as follows:
 m->m[r][c]=something;
 if (m->lastcol)...
 */
-struct matrix *new_matrix(int rows, int cols) {
+struct matrix * new_matrix(int rows, int cols) {
     double **tmp;
     int i;
-    struct matrix *m;
+    struct matrix * m;
 
-    tmp = (double **)malloc(rows * sizeof(double *));
-    for (i=0;i<rows;i++) {
-        tmp[i]=(double *)malloc(cols * sizeof(double));
+    tmp = (double **) malloc(rows * sizeof(double *));
+    for (i = 0; i < rows; i++) {
+        tmp[i] = (double *) malloc(cols * sizeof(double));
     }
 
-    m=(struct matrix *)malloc(sizeof(struct matrix));
-    m->m=tmp;
-    m->rows = rows;
-    m->cols = cols;
-    m->lastcol = 0;
+    m = (struct matrix *) malloc(sizeof(struct matrix));
+    m -> m = tmp;
+    m -> rows = rows;
+    m -> cols = cols;
+    m -> lastcol = 0;
 
     return m;
 }
@@ -304,10 +306,10 @@ Returns:
 void free_matrix(struct matrix *m) {
     int i;
 
-    for (i=0;i<m->rows;i++) {
-        free(m->m[i]);
+    for (i = 0; i < m -> rows; i++) {
+        free(m -> m[i]);
     }
-    free(m->m);
+    free(m -> m);
     free(m);
 }
 
@@ -323,10 +325,10 @@ newcols number of collumns
 void grow_matrix(struct matrix *m, int newcols) {
     int i;
 
-    for (i=0;i<m->rows;i++) {
-        m->m[i] = realloc(m->m[i],newcols*sizeof(double));
+    for (i = 0; i < m -> rows; i++) {
+        m -> m[i] = realloc(m->m[i], newcols * sizeof(double));
     }
-    m->cols = newcols;
+    m -> cols = newcols;
 }
 
 
@@ -340,7 +342,9 @@ copy matrix a to matrix b
 void copy_matrix(struct matrix *a, struct matrix *b) {
     int r, c;
 
-    for (r=0; r < a->rows; r++)
-    for (c=0; c < a->cols; c++)
-    b->m[r][c] = a->m[r][c];
+    for (r = 0; r < a -> rows; r++) {
+        for (c = 0; c < a -> cols; c++) {
+            b -> m[r][c] = a -> m[r][c];
+        }
+    }
 }
